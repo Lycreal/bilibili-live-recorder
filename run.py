@@ -40,9 +40,13 @@ class BiliBiliLiveRecorder(BiliBiliLive):
             headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko'
             headers['Referer'] = re.findall(r'(https://.*\/).*\.flv', record_url)[0]
             resp = requests.get(record_url, stream=True, headers=headers)
-            with open(output_filename, "wb") as f:
-                for chunk in resp.iter_content(chunk_size=1024):
-                    f.write(chunk) if chunk else None
+            if resp.status_code == 200 and resp.headers.get('Content-Type') == 'video/x-flv':
+                with open(output_filename, "wb") as f:
+                    for chunk in resp.iter_content(chunk_size=1024):
+                        f.write(chunk) if chunk else None
+            else:
+                self.print(self.room_id, f'Error response: {(resp.status_code, resp.headers.get("Content-Type"))}')
+                time.sleep(10)
         except Exception as e:
             self.print(self.room_id, 'Error while recording:' + str(e))
 
